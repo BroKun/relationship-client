@@ -1,2 +1,2 @@
 # relationship-client
-micro-program
+we-app
