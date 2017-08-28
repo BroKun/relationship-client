@@ -1,5 +1,12 @@
-const { checkSession, login, getUserInfo } = require('./lib/wx.js');
+const { request, checkSession, login, getUserInfo } = require('./lib/wx.js');
 const co = require('./lib/co.js');
+const { server } = require('./constant');
+
+function getOpenId(code) {
+  return request({
+    url: `${server}/user/token?code=${code}`,
+  });
+}
 //app.js
 App({
   onLaunch: co.wrap(function* () {
@@ -7,14 +14,25 @@ App({
     var logs = wx.getStorageSync('logs') || [];
     logs.unshift(Date.now());
     wx.setStorageSync('logs', logs);
-    const token = wx.getStorageSync('logs');
-    if (!token) {
-      const loginRes = yield login();
-      if (loginRes.code) {
-        // TODO: request code 转化为用户信息，获取并保存token
+    const token = wx.getStorageSync('userInfo');
+    try {
+      if (!token) {
+        const loginRes = yield login();
+        if (loginRes.code) {
+          // TODO: request code 转化为用户信息，获取并保存token
+          const infos = yield getOpenId(loginRes.code);
+          wx.setStorageSync('userInfo', JSON.stringify(infos));
+          Object.assign(this.globalData, infos);
+        } else {
+          // TODO: 无法正确的进行首次登录
+          throw new Error('login failed');
+        }
       } else {
-        // TODO: 无法正确的进行首次登录
+        const infos = JSON.parse(token);
+        Object.assign(this.globalData, infos);
       }
+    } catch (ex) {
+
     }
   }),
 
