@@ -15,19 +15,7 @@ App({
     var logs = wx.getStorageSync('logs') || [];
     logs.unshift(Date.now());
     wx.setStorageSync('logs', logs);
-    try {
-      const loginRes = yield login();
-      if (loginRes.code) {
-        const infos = yield getOpenId(loginRes.code);
-        wx.setStorageSync(accountKey, infos);
-        Object.assign(this.globalData, infos);
-      } else {
-        throw new Error('login failed');
-      }
-    }
-    catch(ex){
-      // TODO: 给出无法登陆的错误页
-    }
+    const access = yield this.login();
   }),
   onShow: () => {
     console.log('进入程序');
@@ -42,24 +30,25 @@ App({
     var that = this
     if (this.globalData.userInfo) {
       return this.globalData.userInfo;
-    } else {
+    }
+    else {
       const accountInfo = wx.getStorageSync(accountKey);
+      const sessionActive = false;
+      if (accountInfo) {
+        const res = yield getUserInfo();
+        that.globalData.userInfo = res.userInfo;
+        return this.globalData.userInfo;
+      }
       try {
-        if (!accountInfo) {
-          yield checkSession();
-          const loginRes = yield login();
-          if (loginRes.code) {
-            const infos = yield getOpenId(loginRes.code);
-            wx.setStorageSync(accountKey, infos);
-            Object.assign(this.globalData, infos);
-          } else {
-            throw new Error('login failed');
-          }
-        } else {
-          Object.assign(this.globalData, accountInfo);
-        }
+        yield checkSession();
+        const res = yield getUserInfo();
+        that.globalData.userInfo = res.userInfo;
+        return this.globalData.userInfo;
       } catch (ex) {
-        // TODO: 给出无法登陆的错误页
+          sessionActive = false;
+      }
+      if (!sessionActive) {
+        yield this.login();
       }
       //调用登录接口
       const res = yield getUserInfo({ withCredentials: true });
@@ -67,7 +56,22 @@ App({
       return this.globalData.userInfo;
     }
   }),
-
+  login: co.wrap(function* () {
+    try {
+      const loginRes = yield login();
+      if (loginRes.code) {
+        const infos = yield getOpenId(loginRes.code);
+        wx.setStorageSync(accountKey, infos);
+        Object.assign(this.globalData, infos);
+        return true;
+      } else {
+        throw new Error('login failed');
+      }
+    }
+    catch (ex) {
+      return false;
+    }
+  }),
   globalData: {
     userInfo: null,
     openid: null,
