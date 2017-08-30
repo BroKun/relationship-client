@@ -1,6 +1,6 @@
 const { request, checkSession, login, getUserInfo } = require('./lib/wx.js');
 const co = require('./lib/co.js');
-const { server } = require('./constant');
+const { server, accountKey } = require('./constant');
 
 function getOpenId(code) {
   return request({
@@ -10,29 +10,27 @@ function getOpenId(code) {
 //app.js
 App({
   onLaunch: co.wrap(function* () {
+    console.log('onLaunch');
     //调用API从本地缓存中获取数据
     var logs = wx.getStorageSync('logs') || [];
     logs.unshift(Date.now());
     wx.setStorageSync('logs', logs);
-    const token = wx.getStorageSync('userInfo');
+    const accountInfo = wx.getStorageSync(accountKey);
     try {
-      if (!token) {
+      if (!accountInfo) {
         const loginRes = yield login();
         if (loginRes.code) {
-          // TODO: request code 转化为用户信息，获取并保存token
           const infos = yield getOpenId(loginRes.code);
-          wx.setStorageSync('userInfo', JSON.stringify(infos));
+          wx.setStorageSync(accountKey, infos);
           Object.assign(this.globalData, infos);
         } else {
-          // TODO: 无法正确的进行首次登录
           throw new Error('login failed');
         }
       } else {
-        const infos = JSON.parse(token);
-        Object.assign(this.globalData, infos);
+        Object.assign(this.globalData, accountInfo);
       }
     } catch (ex) {
-
+      // TODO: 给出无法登陆的错误页
     }
   }),
 
