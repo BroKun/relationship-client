@@ -9,14 +9,13 @@ function getOpenId(code) {
 }
 //app.js
 App({
-  onLaunch: co.wrap(function* () {
+  onLaunch: function () {
     console.log('首次启动');
     //调用API从本地缓存中获取数据
     var logs = wx.getStorageSync('logs') || [];
     logs.unshift(Date.now());
     wx.setStorageSync('logs', logs);
-    const access = yield this.login();
-  }),
+  },
   onShow: () => {
     console.log('进入程序');
   },
@@ -26,32 +25,25 @@ App({
   onError: () => {
     console.log('程序异常');
   },
+  confirmBaseInfo: co.wrap(function* () {
+    try {
+      yield checkSession();
+      if (!this.globalData.loginInfo) {
+        throw new Error('session outdated');
+      }
+      return true;
+    } catch (ex) {
+      return yield login();
+    }
+  }),
   getUserInfo: co.wrap(function* () {
     var that = this
     if (this.globalData.userInfo) {
       return this.globalData.userInfo;
     }
     else {
-      const accountInfo = wx.getStorageSync(accountKey);
-      const sessionActive = false;
-      if (accountInfo) {
-        const res = yield getUserInfo();
-        that.globalData.userInfo = res.userInfo;
-        return this.globalData.userInfo;
-      }
-      try {
-        yield checkSession();
-        const res = yield getUserInfo();
-        that.globalData.userInfo = res.userInfo;
-        return this.globalData.userInfo;
-      } catch (ex) {
-          sessionActive = false;
-      }
-      if (!sessionActive) {
-        yield this.login();
-      }
       //调用登录接口
-      const res = yield getUserInfo({ withCredentials: true });
+      const res = yield getUserInfo();
       that.globalData.userInfo = res.userInfo;
       return this.globalData.userInfo;
     }
@@ -62,7 +54,7 @@ App({
       if (loginRes.code) {
         const infos = yield getOpenId(loginRes.code);
         wx.setStorageSync(accountKey, infos);
-        Object.assign(this.globalData, infos);
+        this.globalData.loginInfo = infos;
         return true;
       } else {
         throw new Error('login failed');
@@ -74,8 +66,6 @@ App({
   }),
   globalData: {
     userInfo: null,
-    openid: null,
-    unionid: null,
-    token: null,
+    loginInfo: null,
   }
 })
