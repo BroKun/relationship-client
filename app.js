@@ -17,6 +17,7 @@ App({
     wx.setStorageSync('logs', logs);
   },
   onShow: () => {
+    this.confirmBaseInfo();
     console.log('进入程序');
   },
   onHide: () => {
