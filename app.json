@@ -17,14 +17,14 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "iconPath": "resources/icons/homepage.png",
-        "selectedIconPath": "resources/icons/homepage_fill.png",
+        "iconPath": "resources/icons/home.png",
+        "selectedIconPath": "resources/icons/home_fill.png",
         "text": "主页"
       },
       {
         "pagePath": "pages/logs/logs",
-        "iconPath": "resources/icons/mine.png",
-        "selectedIconPath": "resources/icons/mine_fill.png",
+        "iconPath": "resources/icons/user.png",
+        "selectedIconPath": "resources/icons/user_fill.png",
         "text": "我的"
       }
     ]
