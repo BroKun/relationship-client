@@ -1,4 +1,4 @@
-const { request, checkSession, login, getUserInfo } = require('./lib/wx.js');
+const myWX = require('./lib/wx.js');
 const co = require('./lib/co.js');
 const { server, accountKey } = require('./constant');
 
@@ -9,31 +9,31 @@ function getOpenId(code) {
 }
 //app.js
 App({
-  onLaunch: function () {
-    console.log('首次启动');
+  onLaunch: () => {
+    console.log('首次启动: app.onLaunch');
     //调用API从本地缓存中获取数据
     var logs = wx.getStorageSync('logs') || [];
     logs.unshift(Date.now());
     wx.setStorageSync('logs', logs);
   },
   onShow: () => {
-    console.log('进入程序');
+    console.log('进入程序: app.onShow');
   },
   onHide: () => {
-    console.log('隐藏程序');
+    console.log('隐藏程序: app.onHide');
   },
   onError: () => {
-    console.log('程序异常');
+    console.log('程序异常: app.onError');
   },
-  confirmBaseInfo: co.wrap(function* () {
+  confirmOnline: co.wrap(function* () {
     try {
-      yield checkSession();
+      yield myWX.checkSession();
       if (!this.globalData.loginInfo) {
         throw new Error('session outdated');
       }
       return true;
     } catch (ex) {
-      return yield login();
+      return yield this.login();
     }
   }),
   getUserInfo: co.wrap(function* () {
@@ -43,7 +43,7 @@ App({
     }
     else {
       //调用登录接口
-      const res = yield getUserInfo();
+      const res = yield myWX.getUserInfo();
       that.globalData.userInfo = res.userInfo;
       return this.globalData.userInfo;
     }
